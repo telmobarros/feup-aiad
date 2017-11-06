@@ -1,13 +1,29 @@
-<repast.simphony.visualization.engine.CartesianDisplayDescriptor>
+<repast.simphony.visualization.engine.CartesianDisplayDescriptor simphonyVersion="2.5.0">
   <name>New Display</name>
   <type>2D</type>
   <styles>
+    <entry>
+      <string>entities.Rock</string>
+      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
+    </entry>
+    <entry>
+      <string>entities.Exit</string>
+      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
+    </entry>
     <entry>
       <string>entities.Wall</string>
       <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
     </entry>
   </styles>
   <editedStyles>
+    <entry>
+      <string>entities.Rock</string>
+      <string>entities.Rock.style_1.xml</string>
+    </entry>
+    <entry>
+      <string>entities.Exit</string>
+      <string>entities.Exit.style_1.xml</string>
+    </entry>
     <entry>
       <string>entities.Wall</string>
       <string>entities.Wall.style_0.xml</string>
@@ -23,15 +39,23 @@
     <pType>LAST</pType>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
-    <hashCode>-519279594</hashCode>
+    <hashCode>1267763156</hashCode>
   </schedParams>
   <layoutClassName>foo.bar.baz</layoutClassName>
   <layoutProjection>grid</layoutProjection>
   <layoutInterval>0</layoutInterval>
   <layerOrder>
     <entry>
-      <string>entities.Wall</string>
+      <string>entities.Rock</string>
+      <int>1</int>
+    </entry>
+    <entry>
+      <string>entities.Exit</string>
       <int>0</int>
+    </entry>
+    <entry>
+      <string>entities.Wall</string>
+      <int>2</int>
     </entry>
   </layerOrder>
   <projections>
