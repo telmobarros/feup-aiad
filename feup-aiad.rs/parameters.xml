@@ -6,6 +6,12 @@
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
 		/>
+				<parameter name="mapFile" displayName="Map file path" type="java.lang.String" 
+						defaultValue="map.txt" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
+									
+		/>
 				<parameter name="nExplorers" displayName="Number of explorers" type="int" 
 						defaultValue="5" 
 						isReadOnly="false" 
@@ -13,6 +19,18 @@
 									
 		/>
 				<parameter name="nSuperExplorers" displayName="Number of SuperExplorers" type="int" 
+						defaultValue="5" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
+				<parameter name="visionRadius" displayName="Vision radius" type="int" 
+						defaultValue="5" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
+				<parameter name="communicationRange" displayName="Communication Range" type="int" 
 						defaultValue="5" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"

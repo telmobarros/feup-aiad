@@ -8,12 +8,13 @@ public abstract class Explorer extends Agent{
 	private char[][] knownSpace;
 	private int visionRadius;
 
-	/*private ContinuousSpace <Object> space ;*/
 	private Grid <Object> grid ;
 
-	public Explorer(/*ContinuousSpace <Object> space ,*/ Grid <Object> grid ) {
+	public Explorer(Grid <Object> grid, int visionRadius, int mapDim) {
 		/*this.space = space ;*/
 		this.grid = grid ;
+		this.knownSpace = new char[mapDim][mapDim];
+		this.visionRadius = visionRadius;
 		
 		addBehaviour(new MyBeh());
 	}

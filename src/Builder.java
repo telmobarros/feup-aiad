@@ -11,6 +11,7 @@ import entities.Exit;
 import entities.Rock;
 import entities.Wall;
 import entities.agents.SimpleExplorer;
+import entities.agents.SuperExplorer;
 import repast.simphony.context.Context;
 import repast.simphony.context.space.continuous.ContinuousSpaceFactory;
 import repast.simphony.context.space.continuous.ContinuousSpaceFactoryFinder;
@@ -37,24 +38,28 @@ public class Builder implements ContextBuilder<Object> {
 	@Override
 	public Context build(Context<Object> context) {
 		context.setId("feup-aiad");
-		
+
 		// Parse map
-		String  line = null;
-		int j = 0;
-		char temp;
+		int mapDim;
 		char[][] map;
+		Parameters params = RunEnvironment.getInstance().getParameters();
 		try{
+			String mapFile = params.getString("mapFile");
 			// open input stream for reading purpose.
-			BufferedReader br = new BufferedReader(new FileReader("map.txt"));
+			BufferedReader br = new BufferedReader(new FileReader(mapFile));
+
+
 			//reads first line to get maze square size
+			String  line = null;
+			char temp;
 			line = br.readLine();
-			System.out.println(line);
-			
-			int mapDim = line.length();
+
+			mapDim = line.length();
+			int y = mapDim - 1;
 			//initializes maze array with size of first line
 			map = new char[mapDim][mapDim];
-			
-			//creates grid
+
+			//initializes grid
 			GridFactory gridFactory = GridFactoryFinder.createGridFactory(null);
 			Grid<Object> grid = gridFactory.createGrid(
 					"grid",
@@ -63,40 +68,30 @@ public class Builder implements ContextBuilder<Object> {
 							new SimpleGridAdder<Object>(),
 							true,
 							mapDim, mapDim));
-			
-			
-			//fills first array with first line
-			for(int i = 0; i < mapDim;i++){
-				temp = line.charAt(i);
-				map[0][i] = temp;
-				Wall w = new Wall(grid);
-				context.add(w);
-				grid.moveTo(w, i, mapDim-1);
-			}
 
-			while ((line = br.readLine()) != null) {
-				for(int i = 0; i < mapDim;i++){
-					temp = line.charAt(i);
-					map[j][i] = temp;
+			do{
+				for(int x = 0; x < mapDim;x++){
+					temp = line.charAt(x);
+					map[y][x] = temp;
 					switch (temp){
 					case 'X':
 						Wall w = new Wall(grid);
 						context.add(w);
-						grid.moveTo(w, i, mapDim-j-2);
+						grid.moveTo(w, x, y);
 						temp = ' ';
 						break;
 
 					case 'R':
 						Rock r = new Rock(grid);
 						context.add(r);
-						grid.moveTo(r, i, mapDim-j-2);
+						grid.moveTo(r, x, y);
 						temp = ' ';
 						break;
 
 					case 'E':
 						Exit e = new Exit(grid);
 						context.add(e);
-						grid.moveTo(e, i, mapDim-j-2);
+						grid.moveTo(e, x, y);
 						temp = ' ';
 						break;
 
@@ -104,44 +99,47 @@ public class Builder implements ContextBuilder<Object> {
 						break;
 					}
 				}
-				j++;
-			}
-
+				y--;
+			} while ((line = br.readLine()) != null);
 			br.close();
-			
+
 			Random r = new Random();
-			Parameters params = RunEnvironment.getInstance().getParameters();
 			int nExplorers = params.getInteger("nExplorers");
 			int nSuperExplorers = params.getInteger("nSuperExplorers");
+			int visionRadius = params.getInteger("visionRadius");
+			int communicationRange = params.getInteger("communicationRange");
 			for (int i=0; i< nExplorers ; i++) {
-				SimpleExplorer se = new SimpleExplorer(grid);
+				SimpleExplorer se = new SimpleExplorer(grid,visionRadius, mapDim, communicationRange);
 				context.add(se);
-				int x;
-				int y;
+				int rx;
+				int ry;
 				do{
-					x = r.nextInt(mapDim);
-					y = r.nextInt(mapDim);
-				} while (map[y][x] != ' ');
-				
-				grid.moveTo(se, x, mapDim - y);
+					rx = r.nextInt(mapDim);
+					ry = r.nextInt(mapDim);
+				} while (map[ry][rx] != ' ');
+
+				grid.moveTo(se, rx, ry);
 			}
-			
+			for (int i=0; i< nSuperExplorers ; i++) {
+				SuperExplorer se = new SuperExplorer(grid, visionRadius, mapDim);
+				context.add(se);
+				int rx;
+				int ry;
+				do{
+					rx = r.nextInt(mapDim);
+					ry = r.nextInt(mapDim);
+				} while (map[ry][rx] != ' ');
+
+				grid.moveTo(se, rx, ry);
+			}
+
 		}catch(Exception e){
+			System.exit(1);
 			e.printStackTrace();
 		}
-		
-		//int zombieCount = 5;
-		//for (int i=0; i<zombieCount ; i++) {
-		//context.add(new Wall(/*space,*/ grid));
-		//}
-		
-		//for(Object obj : context) {
-			//NdPoint pt = space.getLocation(obj);
-			//grid.moveTo(obj, 10, 10);
-			//} 
 
 		return context;
-				
+
 	}
 
 }
