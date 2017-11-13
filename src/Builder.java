@@ -5,16 +5,20 @@
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.Random;
 
 import entities.Exit;
 import entities.Rock;
 import entities.Wall;
+import entities.agents.SimpleExplorer;
 import repast.simphony.context.Context;
 import repast.simphony.context.space.continuous.ContinuousSpaceFactory;
 import repast.simphony.context.space.continuous.ContinuousSpaceFactoryFinder;
 import repast.simphony.context.space.grid.GridFactory;
 import repast.simphony.context.space.grid.GridFactoryFinder;
 import repast.simphony.dataLoader.ContextBuilder;
+import repast.simphony.engine.environment.RunEnvironment;
+import repast.simphony.parameter.Parameters;
 import repast.simphony.random.RandomHelper;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.NdPoint;
@@ -34,21 +38,12 @@ public class Builder implements ContextBuilder<Object> {
 	public Context build(Context<Object> context) {
 		context.setId("feup-aiad");
 		
-		/*ContinuousSpaceFactory spaceFactory = ContinuousSpaceFactoryFinder.createContinuousSpaceFactory(null);
-		ContinuousSpace<Object> space = spaceFactory.createContinuousSpace(
-				"space",
-				context, 
-				new RandomCartesianAdder<Object>(),
-				new repast.simphony.space.continuous.WrapAroundBorders(),
-				50, 50);*/
-		
-		
+		// Parse map
 		String  line = null;
 		int j = 0;
 		char temp;
 		char[][] map;
 		try{
-			System.out.println("aqui vou");
 			// open input stream for reading purpose.
 			BufferedReader br = new BufferedReader(new FileReader("map.txt"));
 			//reads first line to get maze square size
@@ -113,6 +108,24 @@ public class Builder implements ContextBuilder<Object> {
 			}
 
 			br.close();
+			
+			Random r = new Random();
+			Parameters params = RunEnvironment.getInstance().getParameters();
+			int nExplorers = params.getInteger("nExplorers");
+			int nSuperExplorers = params.getInteger("nSuperExplorers");
+			for (int i=0; i< nExplorers ; i++) {
+				SimpleExplorer se = new SimpleExplorer(grid);
+				context.add(se);
+				int x;
+				int y;
+				do{
+					x = r.nextInt(mapDim);
+					y = r.nextInt(mapDim);
+				} while (map[y][x] != ' ');
+				
+				grid.moveTo(se, x, mapDim - y);
+			}
+			
 		}catch(Exception e){
 			e.printStackTrace();
 		}

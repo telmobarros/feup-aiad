@@ -1,4 +1,4 @@
-<repast.simphony.visualization.engine.CartesianDisplayDescriptor simphonyVersion="2.5.0">
+<repast.simphony.visualization.engine.CartesianDisplayDescriptor>
   <name>New Display</name>
   <type>2D</type>
   <styles>
@@ -7,7 +7,15 @@
       <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
     </entry>
     <entry>
+      <string>entities.agents.SimpleExplorer</string>
+      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
+    </entry>
+    <entry>
       <string>entities.Exit</string>
+      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
+    </entry>
+    <entry>
+      <string>entities.agents.SuperExplorer</string>
       <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
     </entry>
     <entry>
@@ -21,8 +29,16 @@
       <string>entities.Rock.style_1.xml</string>
     </entry>
     <entry>
+      <string>entities.agents.SimpleExplorer</string>
+      <string>entities.agents.SimpleExplorer.style_0.xml</string>
+    </entry>
+    <entry>
       <string>entities.Exit</string>
       <string>entities.Exit.style_1.xml</string>
+    </entry>
+    <entry>
+      <string>entities.agents.SuperExplorer</string>
+      <string>entities.agents.SuperExplorer.style_0.xml</string>
     </entry>
     <entry>
       <string>entities.Wall</string>
@@ -39,7 +55,7 @@
     <pType>LAST</pType>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
-    <hashCode>1267763156</hashCode>
+    <hashCode>-1765401103</hashCode>
   </schedParams>
   <layoutClassName>foo.bar.baz</layoutClassName>
   <layoutProjection>grid</layoutProjection>
@@ -50,8 +66,16 @@
       <int>1</int>
     </entry>
     <entry>
+      <string>entities.agents.SimpleExplorer</string>
+      <int>4</int>
+    </entry>
+    <entry>
       <string>entities.Exit</string>
       <int>0</int>
+    </entry>
+    <entry>
+      <string>entities.agents.SuperExplorer</string>
+      <int>3</int>
     </entry>
     <entry>
       <string>entities.Wall</string>
