@@ -1,6 +1,3 @@
-/**
- * 
- */
 
 
 import java.io.BufferedReader;
@@ -12,29 +9,84 @@ import entities.Rock;
 import entities.Wall;
 import entities.agents.SimpleExplorer;
 import entities.agents.SuperExplorer;
+import jade.core.AID;
+import jade.core.Profile;
+import jade.core.ProfileImpl;
 import repast.simphony.context.Context;
-import repast.simphony.context.space.continuous.ContinuousSpaceFactory;
-import repast.simphony.context.space.continuous.ContinuousSpaceFactoryFinder;
+import repast.simphony.context.space.graph.NetworkBuilder;
 import repast.simphony.context.space.grid.GridFactory;
 import repast.simphony.context.space.grid.GridFactoryFinder;
-import repast.simphony.dataLoader.ContextBuilder;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.parameter.Parameters;
-import repast.simphony.random.RandomHelper;
-import repast.simphony.space.continuous.ContinuousSpace;
-import repast.simphony.space.continuous.NdPoint;
-import repast.simphony.space.continuous.RandomCartesianAdder;
 import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridBuilderParameters;
-import repast.simphony.space.grid.GridPoint;
 import repast.simphony.space.grid.SimpleGridAdder;
 import repast.simphony.space.grid.WrapAroundBorders;
+import sajas.core.Agent;
+import sajas.core.Runtime;
+import sajas.sim.repasts.RepastSLauncher;
+import sajas.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
 
-/**
- *
- */
-public class Builder implements ContextBuilder<Object> {
+public class Launcher extends RepastSLauncher {
+	SimpleExplorer simpleExplorers[];
+	SuperExplorer superExplorers[];
+	
+	public static final boolean USE_RESULTS_COLLECTOR = true;
+	
+	public static final boolean SEPARATE_CONTAINERS = false;
+	private ContainerController mainContainer;
+	private ContainerController agentContainer;
 
+	public static Agent getAgent(Context<?> context, AID aid) {
+		for(Object obj : context.getObjects(Agent.class)) {
+			if(((Agent) obj).getAID().equals(aid)) {
+				return (Agent) obj;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		return "Service Consumer/Provider -- SAJaS RepastS Test";
+	}
+
+	@Override
+	protected void launchJADE() {
+		System.out.println("louco");
+		Runtime rt = Runtime.instance();
+		Profile p1 = new ProfileImpl();
+		mainContainer = rt.createMainContainer(p1);
+		
+		if(SEPARATE_CONTAINERS) {
+			Profile p2 = new ProfileImpl();
+			agentContainer = rt.createAgentContainer(p2);
+		} else {
+			agentContainer = mainContainer;
+		}
+		
+		launchAgents();
+	}
+	
+	private void launchAgents() {
+		
+		try {
+			
+			for (int i=0; i< simpleExplorers.length ; i++) {
+				agentContainer.acceptNewAgent("SimpleExplorer" + i, simpleExplorers[i]).start();
+			}
+			
+			for (int i=0; i< superExplorers.length ; i++) {
+				agentContainer.acceptNewAgent("SuperExplorer" + i, superExplorers[i]).start();
+			}
+
+		} catch (StaleProxyException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	@Override
 	public Context build(Context<Object> context) {
 		context.setId("feup-aiad");
@@ -108,9 +160,11 @@ public class Builder implements ContextBuilder<Object> {
 			int nSuperExplorers = params.getInteger("nSuperExplorers");
 			int visionRadius = params.getInteger("visionRadius");
 			int communicationRange = params.getInteger("communicationRange");
+			simpleExplorers = new SimpleExplorer[nExplorers];
+			superExplorers = new SuperExplorer[nSuperExplorers];
 			for (int i=0; i< nExplorers ; i++) {
-				SimpleExplorer se = new SimpleExplorer(grid,visionRadius, mapDim, communicationRange);
-				context.add(se);
+				simpleExplorers[i] = new SimpleExplorer(grid,visionRadius, mapDim, communicationRange);
+				context.add(simpleExplorers[i]);
 				int rx;
 				int ry;
 				do{
@@ -118,11 +172,11 @@ public class Builder implements ContextBuilder<Object> {
 					ry = r.nextInt(mapDim);
 				} while (map[ry][rx] != ' ');
 
-				grid.moveTo(se, rx, ry);
+				grid.moveTo(simpleExplorers[i], rx, ry);
 			}
 			for (int i=0; i< nSuperExplorers ; i++) {
-				SuperExplorer se = new SuperExplorer(grid, visionRadius, mapDim);
-				context.add(se);
+				superExplorers[i] = new SuperExplorer(grid, visionRadius, mapDim);
+				context.add(superExplorers[i]);
 				int rx;
 				int ry;
 				do{
@@ -130,7 +184,7 @@ public class Builder implements ContextBuilder<Object> {
 					ry = r.nextInt(mapDim);
 				} while (map[ry][rx] != ' ');
 
-				grid.moveTo(se, rx, ry);
+				grid.moveTo(superExplorers[i], rx, ry);
 			}
 
 		}catch(Exception e){
@@ -138,8 +192,7 @@ public class Builder implements ContextBuilder<Object> {
 			e.printStackTrace();
 		}
 
-		return context;
-
+		return super.build(context);
 	}
 
 }
