@@ -49,12 +49,11 @@ public class Launcher extends RepastSLauncher {
 
 	@Override
 	public String getName() {
-		return "Service Consumer/Provider -- SAJaS RepastS Test";
+		return "Unknown space exploring";
 	}
 
 	@Override
 	protected void launchJADE() {
-		System.out.println("louco");
 		Runtime rt = Runtime.instance();
 		Profile p1 = new ProfileImpl();
 		mainContainer = rt.createMainContainer(p1);
