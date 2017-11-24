@@ -13,7 +13,6 @@ import jade.core.AID;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import repast.simphony.context.Context;
-import repast.simphony.context.space.graph.NetworkBuilder;
 import repast.simphony.context.space.grid.GridFactory;
 import repast.simphony.context.space.grid.GridFactoryFinder;
 import repast.simphony.engine.environment.RunEnvironment;
@@ -119,7 +118,7 @@ public class Launcher extends RepastSLauncher {
 							new SimpleGridAdder<Object>(),
 							true,
 							mapDim, mapDim));
-
+			
 			do{
 				for(int x = 0; x < mapDim;x++){
 					temp = line.charAt(x);
