@@ -67,4 +67,8 @@ public abstract class Explorer extends Agent{
 	}
 
 	public abstract int getCommunicationRange();
+	
+	public void setState(ExplorerState state) {
+		this.state = state;
+	}
 }

@@ -11,6 +11,8 @@ import entities.Rock;
 import entities.Wall;
 import entities.agents.Explorer;
 import entities.agents.Explorer.ExplorerState;
+import entities.agents.SimpleExplorer;
+import entities.agents.SuperExplorer;
 import jade.lang.acl.ACLMessage;
 import repast.simphony.query.space.grid.GridCell;
 import repast.simphony.query.space.grid.GridCellNgh;
@@ -29,6 +31,9 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	private ArrayList<T> visibleAgents;
 	private ArrayList<GridPoint> possibleMoves;
 	
+	private int helpCount = 0;
+	private int maxHelpCount = 5;
+	
 	@Override
 	public void action() {
 		// init variables
@@ -44,6 +49,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		findVisibleAgents();
 		// inform visible agents about the known space (send known space to a method that accepts what we want to send and sends it to agents that we want)
 		if (visibleAgents.size() != 0) {
+			// TODO delete print
 			System.out.println("#visible agents " + visibleAgents.size());
 			informStateAndKnownSpace(visibleAgents);
 		}
@@ -51,6 +57,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		move();
 	}
 	
+
 	private void updateKnownSpace() {
 		this.myPoint = grid.getLocation(agent);
 		
@@ -71,6 +78,9 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 				//if its an empty space near center or center add to possible moves
 				if(agent.getKnownSpace(cell.getPoint().getY(), cell.getPoint().getX()) == ' '){
 					possibleMoves.add(cell.getPoint());
+				}
+				else if(agent.getKnownSpace(cell.getPoint().getY(), cell.getPoint().getX()) == 'R'){
+					agent.setState(ExplorerState.ASKING_HELP);
 				}
 			} else if (grid.getDistance(myPoint, cell.getPoint()) > 1 && grid.getDistance(myPoint, cell.getPoint()) <= visionRadius){
 				rangeCells.add(cell);
@@ -129,10 +139,21 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		this.visibleAgents.clear();
 		GridCellNgh<Explorer> agentsNghCreator = new GridCellNgh<Explorer>(grid, myPoint, Explorer.class , communicationRange, communicationRange);
 		List<GridCell<Explorer>> gridCellsAgents = agentsNghCreator.getNeighborhood(false); // true or false to include the center
-		for(GridCell<Explorer> cell : gridCellsAgents) {
-			for(Explorer se : cell.items()){
-				if(!this.visibleAgents.contains((T)se)) {
-					this.visibleAgents.add((T)se);
+		if (agent.getClass().equals(SimpleExplorer.class)) {
+			for(GridCell<Explorer> cell : gridCellsAgents) {
+				for(Explorer se : cell.items()){
+					if(se.getClass().equals(SimpleExplorer.class) && !this.visibleAgents.contains((T)se)) {
+						this.visibleAgents.add((T)se);
+					}
+				}
+			}
+		}
+		else {
+			for(GridCell<Explorer> cell : gridCellsAgents) {
+				for(Explorer se : cell.items()){
+					if(se.getClass().equals(SuperExplorer.class) && !this.visibleAgents.contains((T)se)) {
+						this.visibleAgents.add((T)se);
+					}
 				}
 			}
 		}
@@ -151,9 +172,8 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		}
 
 		agent.send(acl);
-
+		
 		acl = agent.receive();
-		System.out.println(acl);
 	}
 	
 	private String knownSpaceString() {
@@ -168,12 +188,38 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	}
 
 	private void move() {
+		if (agent.getState().equals(ExplorerState.ASKING_HELP) && helpCount < maxHelpCount) {
+			askForHelp(visibleAgents);
+			return;
+		}
+		else if (agent.getState().equals(ExplorerState.ASKING_HELP) && helpCount >= maxHelpCount) {
+			System.out.println("Not receiving help :( I'm out after " + helpCount + " steps!");
+			helpCount = 0;
+			agent.setState(ExplorerState.EXPLORING);
+		}
 		Random r = new Random();
 		int i = r.nextInt(possibleMoves.size());
 		GridPoint nextPos = possibleMoves.get(i);
 		grid.moveTo(agent,nextPos.getX(),nextPos.getY());
 	}
 	
+	private void askForHelp(ArrayList<T> visibleAgents) {
+		ExplorerState state = agent.getState();
+		helpCount++;
+		ACLMessage acl = new ACLMessage();
+		acl.setContent(state + "\n" + myPoint);
+
+		for(T se : visibleAgents) {
+			acl.addReceiver(se.getAID());
+			System.out.println(se);
+		}
+
+		agent.send(acl);
+		System.out.println("Help request: " + acl + "\nAsking " + (maxHelpCount-helpCount+1) + " more times!");
+		
+		acl = agent.receive();
+	}
+
 	private static Comparator<GridCell<Entity>> createComparator(Grid<Object> grid,GridPoint pt)
 	{
 		return new Comparator<GridCell<Entity>>()
