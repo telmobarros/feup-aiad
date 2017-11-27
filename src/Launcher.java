@@ -20,6 +20,7 @@ import repast.simphony.parameter.Parameters;
 import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridBuilderParameters;
 import repast.simphony.space.grid.SimpleGridAdder;
+import repast.simphony.space.grid.StrictBorders;
 import repast.simphony.space.grid.WrapAroundBorders;
 import sajas.core.Agent;
 import sajas.core.Runtime;
@@ -114,7 +115,7 @@ public class Launcher extends RepastSLauncher {
 			Grid<Object> grid = gridFactory.createGrid(
 					"grid",
 					context,
-					new GridBuilderParameters<Object>(new WrapAroundBorders(),
+					new GridBuilderParameters<Object>(new StrictBorders(),
 							new SimpleGridAdder<Object>(),
 							true,
 							mapDim, mapDim));

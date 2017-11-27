@@ -5,13 +5,14 @@ import sajas.core.Agent;
 
 public abstract class Explorer extends Agent{
 	public enum ExplorerState {
-		EXPLORING, ASKING_HELP, HELPING, EXITING
+		EXPLORING, ASKING_HELP, HELPING, EXITING, EXITED
 	}
 
 	private Grid<Object> grid;
 	private int visionRadius;
 	private char[][] knownSpace;
 	private ExplorerState state;
+	private boolean moved = true;
 	
 	public Explorer(Grid <Object> grid, int visionRadius, int mapDim) {
 		/* this.space = space ;*/
