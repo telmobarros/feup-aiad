@@ -42,6 +42,8 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 	private int helpCount = 0;
 	private int maxHelpCount = 5;
+	
+	private Stack<GridPoint> exploringPath;
 
 	@Override
 	public void action() {
@@ -57,7 +59,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		readNewMessages();
 		// update own known space
 		updateKnownSpace();
-
+		System.out.println(knownSpaceString());
 
 		//update state
 		updateState();
@@ -68,7 +70,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		// inform visible agents about the known space (send known space to a method that accepts what we want to send and sends it to agents that we want)
 		if (visibleAgents.size() != 0) {
 			// TODO delete print
-			System.out.println("#visible agents " + visibleAgents.size());
+			//System.out.println("#visible agents " + visibleAgents.size());
 			informStateAndKnownSpace(visibleAgents);
 		}
 
@@ -108,7 +110,35 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			helpCount = 0;
 			agent.setState(ExplorerState.EXPLORING);
 		}
+		if (agent.getState().equals(ExplorerState.EXPLORING) && (exploringPath == null || exploringPath.empty())) {
+			// pick a point in unexplored area
+			// make a path to that point
+			System.out.println("path: " + exploringPath);
+			GridPoint unexpPt = getUnexploredPoint();
+			Stack<GridPoint> testPath = AStar.getPathToUnexploredSpace(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), unexpPt.getY(), unexpPt.getX());
+			exploringPath = testPath;
+			if (exploringPath != null) {
+				System.out.println(myPoint + " New exploring path " + agent.getName() + " " + unexpPt + "\nNew exploring path: " + exploringPath);
+			}
+		}
 		updatePossibleMoves();
+	}
+
+	private GridPoint getUnexploredPoint() {
+		Random r = new Random();
+		int x, y;
+		int nLoops = 10; 
+		do {
+			x = r.nextInt(agent.getKnownSpace().length);
+			y = r.nextInt(agent.getKnownSpace().length);
+			// because it might last too long or infinite
+			nLoops--;
+		} while (agent.getKnownSpace(y, x) != 'O' || nLoops == 0);
+		// returns null if unexplored point cannot be fined in reasonable time
+		if (nLoops == 0)
+			return null;
+		
+		return new GridPoint(x,y);
 	}
 
 	private GridPoint getRockPoint() {
@@ -178,7 +208,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		acl = myAgent.receive();
 
 		while(acl != null){
-			System.out.println(acl);
+			//System.out.println(acl);
 			parseAndUpdate(acl.getContent());
 			acl = myAgent.receive();
 		}
@@ -303,11 +333,11 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		content += "\n" + knownSpaceString();
 		acl.setContent(content);
 
-		System.out.println(acl);
+		//System.out.println(acl);
 
 		for(T se : visibleAgents) {
 			acl.addReceiver(se.getAID());
-			System.out.println(se);
+			//System.out.println(se);
 		}
 
 		agent.send(acl);
@@ -329,9 +359,17 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 	private void move() {
 		if (agent.getState().equals(ExplorerState.EXPLORING)) {
-			Random r = new Random();
-			int i = r.nextInt(possibleMoves.size());
-			GridPoint nextPos = possibleMoves.get(i);
+			GridPoint nextPos;
+			if (!exploringPath.empty()) {
+				System.out.println("Following the path");
+				nextPos = exploringPath.pop();
+			}
+			else {
+				System.out.println("Moving randomly");
+				Random r = new Random();
+				int i = r.nextInt(possibleMoves.size());
+				nextPos = possibleMoves.get(i);
+			}
 			grid.moveTo(agent,nextPos.getX(),nextPos.getY());
 		} else if (agent.getState().equals(ExplorerState.ASKING_HELP) && helpCount < maxHelpCount) {
 			helpCount++;
@@ -352,7 +390,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 		for(T se : visibleAgents) {
 			acl.addReceiver(se.getAID());
-			System.out.println(se);
+			//System.out.println(se);
 		}
 
 		agent.send(acl);
