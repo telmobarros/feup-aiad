@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -22,6 +23,7 @@ public class MainMenuGUI extends JFrame {
 
 	private JPanel contentPane;
 	private JTextField mapDimensionText;
+	private JTextField fileNameText;
 
 	/**
 	 * Launch the application.
@@ -46,7 +48,7 @@ public class MainMenuGUI extends JFrame {
 		setResizable(false);
 		setTitle("Map Creator");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(600, 250, 200, 200);
+		setBounds(600, 250, 250, 230);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -73,8 +75,27 @@ public class MainMenuGUI extends JFrame {
 				}
 			}
 		});
-		createMapBtn.setBounds(10, 130, 174, 30);
+		createMapBtn.setBounds(10, 130, 100, 30);
 		contentPane.add(createMapBtn);
+		
+		
+		fileNameText = new JTextField();
+		fileNameText.setHorizontalAlignment(SwingConstants.CENTER);
+		fileNameText.setText("map.txt");
+		fileNameText.setBounds(110, 160, 100, 30);
+		contentPane.add(fileNameText);
+		
+		JButton createMapRandBtn = new JButton("Create Random Map");
+		createMapRandBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (checkValuesInserted()) {
+					new MazeBuilder().buildMazetoTXT(fileNameText.getText(), Integer.parseInt(mapDimensionText.getText()));
+				}
+			}
+		});
+		createMapRandBtn.setBounds(10, 160, 100, 30);
+		contentPane.add(createMapRandBtn);
+
 
 		JLabel titleLbl = new JLabel("Map Creator");
 		titleLbl.setForeground(Color.BLACK);
@@ -86,8 +107,8 @@ public class MainMenuGUI extends JFrame {
 	}
 
 	public boolean checkValuesInserted() {
-		if (Integer.parseInt(mapDimensionText.getText()) < 4 || Integer.parseInt(mapDimensionText.getText()) > 100) {
-			JOptionPane.showMessageDialog(this, "Map dimension should be a value between 4 and 100", "Error",
+		if (Integer.parseInt(mapDimensionText.getText()) < 4 || Integer.parseInt(mapDimensionText.getText()) > 300) {
+			JOptionPane.showMessageDialog(this, "Map dimension should be a value between 4 and 300", "Error",
 					JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
