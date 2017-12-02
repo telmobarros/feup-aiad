@@ -8,12 +8,14 @@ public abstract class Explorer extends Agent{
 		EXPLORING, ASKING_HELP, HELPING, EXITING, EXITED
 	}
 
+	public static double ASK_HELP_PROB = 0.4;
+
 	private Grid<Object> grid;
 	private int visionRadius;
 	private char[][] knownSpace;
 	private ExplorerState state;
 	private boolean moved = true;
-	
+
 	public Explorer(Grid <Object> grid, int visionRadius, int mapDim) {
 		/* this.space = space ;*/
 		this.grid = grid;
@@ -42,33 +44,33 @@ public abstract class Explorer extends Agent{
 	public int getVisionRadius() {
 		return visionRadius;
 	}
-	
+
 	public ExplorerState getState() {
 		return state;
 	}
-	
+
 	public void setKnownSpace(int y, int x, char c) {
 		knownSpace[y][x] = c;
 	}
-	
+
 	public char getKnownSpace(int y, int x) {
 		return knownSpace[y][x];
 	}
-	
+
 	public char[][] getKnownSpace() {
 		return knownSpace;
 	}
-	
+
 	public Grid<Object> getGrid() { 
 		return grid; 
 	}
-	
+
 	public void setGrid(Grid<Object> grid) { 
 		this.grid = grid; 
 	}
 
 	public abstract int getCommunicationRange();
-	
+
 	public void setState(ExplorerState state) {
 		this.state = state;
 	}

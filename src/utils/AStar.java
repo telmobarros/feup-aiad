@@ -129,7 +129,7 @@ public class AStar {
 
 		for(int y=0;y<mapDim;++y){
 			for(int x=0;x<mapDim;++x){
-				if(knownSpace[y][x] == ' ' || knownSpace[y][x] == 'E'){
+				if(knownSpace[y][x] == ' ' || (x == ex && y == ey)){
 					grid[y][x] = new Cell(y, x);
 					grid[y][x].heuristicCost = Math.abs(y-endY)+Math.abs(x-endX);
 				}

@@ -2,7 +2,9 @@ package behaviours;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
 
@@ -34,11 +36,14 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	private GridPoint myPoint;
 	private ArrayList<T> visibleAgents;
 	private ArrayList<GridPoint> possibleMoves;
-	
+
 	private GridPoint exit = null;
 	private Stack<GridPoint> exitPath;
-	
-	private GridPoint askHelp = null;
+
+	private GridPoint help = null;
+	private Stack<GridPoint> helpPath;
+	private ArrayList<GridPoint> helpRequests;
+	private boolean someoneNearIsAlreadyHelping;
 
 	private int helpCount = 0;
 	private int maxHelpCount = 5;
@@ -96,45 +101,80 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 				}
 			}
 		}
-		if(!agent.getState().equals(ExplorerState.ASKING_HELP)){
-			askHelp = getRockPoint();
-			if(askHelp != null){
-				agent.setState(ExplorerState.ASKING_HELP);
-				return;
+		if(!agent.getState().equals(ExplorerState.HELPING) && !helpRequests.isEmpty()){
+			help = getNearestHelpRequest();
+			if(help != null){
+				helpPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), help.getY(), help.getX());
+				if(!helpPath.isEmpty()){ // check if there is path between agent position and rock
+					helpPath.pop(); // pop starting position that is the position where the agent is currently
+					agent.setState(ExplorerState.HELPING);
+					return;
+				}
 			}
 		}
-		if (agent.getState().equals(ExplorerState.ASKING_HELP) && helpCount >= maxHelpCount) {
-			System.out.println("Not receiving help :( I'm out after " + helpCount + " steps!");
+
+		// agent is exploring and sees a rock in its vision radius will ask for help to remove it
+		if(!agent.getState().equals(ExplorerState.ASKING_HELP)){
+			Random r = new Random();
+			if(r.nextDouble() < Explorer.ASK_HELP_PROB){ // only asks for help with some probability
+				help = getRockPoint();
+				if(help != null){
+					helpPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), help.getY(), help.getX());
+					if(!helpPath.isEmpty()){ // check if there is path between agent position and rock
+						helpPath.pop(); // pop starting position that is the position where the agent is currently
+						agent.setState(ExplorerState.ASKING_HELP);
+						return;
+					}
+				}
+			}
+		}
+
+		// gives up from trying to remove a rock if nobody helps him in 5 steps or the rock ir already been removed
+		if (((agent.getState().equals(ExplorerState.ASKING_HELP)|| agent.getState().equals(ExplorerState.HELPING)) && helpCount >= maxHelpCount) // tired of waiting
+				|| (agent.getState().equals(ExplorerState.ASKING_HELP) || agent.getState().equals(ExplorerState.HELPING)) //&& agent.getKnownSpace(askHelp.getX(),askHelp.getY()) == ' ') { // rock has been already removed
+				|| (agent.getState().equals(ExplorerState.HELPING) && someoneNearIsAlreadyHelping)){ // someone near is already helping
+			//System.out.println("Not receiving help :( I'm out after " + helpCount + " steps!");
 			helpCount = 0;
 			agent.setState(ExplorerState.EXPLORING);
 		}
 		updatePossibleMoves();
 	}
 
+	private GridPoint getNearestHelpRequest() {
+		GridPoint nearestHelp = null;
+
+		double maxDist = agent.getVisionRadius();
+		for(GridPoint help: helpRequests){
+			double dist = grid.getDistance(help, myPoint);
+			if(dist < maxDist){
+				maxDist = dist;
+				nearestHelp = help;
+			}
+		}
+
+		return nearestHelp;
+	}
+
+	/*
+	 * Get nearest rock within vision radius
+	 */
 	private GridPoint getRockPoint() {
-		ArrayList<GridPoint> rockPoints = new ArrayList<GridPoint>();
-		int x = myPoint.getX();
-		int y = myPoint.getY();
-		if(agent.getKnownSpace(y-1,x) == 'R'){
-			rockPoints.add(new GridPoint(x,y-1));
+		GridPoint rockPoint = null;
+
+		double maxDist = agent.getVisionRadius();
+		for(int y=0; y<agent.getKnownSpace().length; y++){
+			for(int x=0; x < agent.getKnownSpace().length; x++){
+				if(agent.getKnownSpace(y,x) == 'R'){
+					double dist = grid.getDistance(new GridPoint(x,y), myPoint);
+					if(dist < maxDist){
+						maxDist = dist;
+						rockPoint = new GridPoint(x,y);
+					}
+				}
+			}
 		}
-		if(agent.getKnownSpace(y+1,x) == 'R'){
-			rockPoints.add(new GridPoint(x,y+1));
-		}
-		if(agent.getKnownSpace(y,x-1) == 'R'){
-			rockPoints.add(new GridPoint(x-1,y));
-		}
-		if(agent.getKnownSpace(y,x+1) == 'R'){
-			rockPoints.add(new GridPoint(x+1,y));
-		}
-		
-		if (rockPoints.size() > 0){
-			Random r = new Random();
-			int i = r.nextInt(rockPoints.size());
-			return rockPoints.get(i);
-		} else {
-			return null;
-		}
+
+		return rockPoint;
 	}
 
 	private void updatePossibleMoves() {
@@ -175,6 +215,10 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	private void readNewMessages() {
 		ACLMessage acl = new ACLMessage();
 
+		// reset help requests and helping informations
+		helpRequests = new ArrayList<GridPoint>();
+		someoneNearIsAlreadyHelping = false;
+
 		acl = myAgent.receive();
 
 		while(acl != null){
@@ -190,6 +234,20 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	 */
 	private void parseAndUpdate(String message) {
 		String[] lines = message.split("\n");
+		String[] state = lines[0].split(" ");
+		if(state[0].equals("ASKING_HELP") && (!agent.getState().equals("ASKING_HELP") || !agent.getState().equals("HELPING"))){
+			int x = Integer.parseInt(state[1]);
+			int y = Integer.parseInt(state[2]);
+			helpRequests.add(new GridPoint(x,y));
+		} else if(state[0].equals("HELPING") && agent.getState().equals("HELPING")){
+			int x = Integer.parseInt(state[1]);
+			int y = Integer.parseInt(state[2]);
+			int nSteps = Integer.parseInt(state[3]);
+			if(help == new GridPoint(x,y) && helpPath.size() > nSteps){
+				someoneNearIsAlreadyHelping = true;
+			}
+		}
+
 		int mapDim = agent.getKnownSpace().length;
 		// update known space
 		for(int y = mapDim-1; y >= 0; y--){
@@ -296,9 +354,11 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		ExplorerState state = agent.getState();
 		ACLMessage acl = new ACLMessage(ACLMessage.INFORM);
 		String content = new String();
-		content += state;
+		content += state + " ";
 		if(state.equals(ExplorerState.ASKING_HELP)){
-			content += askHelp;
+			content += help.getX() + " " + help.getY();
+		} else if(state.equals(ExplorerState.HELPING)) {
+			content += help.getX() + " " + help.getY() + " " + helpPath.size();
 		}
 		content += "\n" + knownSpaceString();
 		acl.setContent(content);
@@ -333,8 +393,14 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			int i = r.nextInt(possibleMoves.size());
 			GridPoint nextPos = possibleMoves.get(i);
 			grid.moveTo(agent,nextPos.getX(),nextPos.getY());
-		} else if (agent.getState().equals(ExplorerState.ASKING_HELP) && helpCount < maxHelpCount) {
-			helpCount++;
+		} else if (agent.getState().equals(ExplorerState.ASKING_HELP) || agent.getState().equals(ExplorerState.HELPING)) {
+			if(grid.getDistance(help, myPoint) > 1){// agent can be asking for help when moving towards the rock
+				System.out.println("OMW to rock");
+				GridPoint nextHelpMove = helpPath.pop();
+				grid.moveTo(agent, nextHelpMove.getX(), nextHelpMove.getY());
+			}else{ // agent can be already next to the rock waiting for help and that way we will only wait 5 steps asking for help
+				helpCount++;
+			}
 			// askForHelp(visibleAgents);
 			//return;
 		} else if (agent.getState().equals(ExplorerState.EXITING)) {	// if the explorer already found the exit it starts to go to the exit
