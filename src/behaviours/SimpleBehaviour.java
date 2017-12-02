@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
 
+import main.Launcher;
 import entities.Entity;
 import entities.Exit;
 import entities.Rock;
@@ -17,6 +18,7 @@ import entities.agents.Explorer.ExplorerState;
 import entities.agents.SimpleExplorer;
 import entities.agents.SuperExplorer;
 import jade.lang.acl.ACLMessage;
+import main.Launcher;
 import repast.simphony.context.Context;
 import repast.simphony.query.space.grid.GridCell;
 import repast.simphony.query.space.grid.GridCellNgh;
@@ -59,27 +61,29 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		this.communicationRange = agent.getCommunicationRange();
 		this.visibleAgents = new ArrayList<T>();
 
-
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " started new step");}
 		// update known space based on new info by other agents
 		readNewMessages();
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " udpated map knowledge based on others info");}
 		// update own known space
 		updateKnownSpace();
-		System.out.println(knownSpaceString());
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " udpated map knowledge based on my vision");}
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " kwown map:\n" + knownSpaceString());}
 
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " was " + agent.getState().toString() + " [" + help + ", " + exit + "]");}
 		//update state
 		updateState();
-
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is " + agent.getState().toString() + " [" + help + ", " + exit + "]");}
 
 		// find visible agents
 		findVisibleAgents();
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " will inform new state to: " + visibleAgents.toString());}
 		// inform visible agents about the known space (send known space to a method that accepts what we want to send and sends it to agents that we want)
 		if (visibleAgents.size() != 0) {
-			// TODO delete print
-			//System.out.println("#visible agents " + visibleAgents.size());
 			informStateAndKnownSpace(visibleAgents);
 		}
-
-
+		
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " moves");}
 		// make a move based on the state
 		move();
 	}
@@ -142,12 +146,12 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		if (agent.getState().equals(ExplorerState.EXPLORING) && (exploringPath == null || exploringPath.empty())) {
 			// pick a point in unexplored area
 			// make a path to that point
-			System.out.println("path: " + exploringPath);
+			//System.out.println("path: " + exploringPath);
 			GridPoint unexpPt = getUnexploredPoint();
 			Stack<GridPoint> testPath = AStar.getPathToUnexploredSpace(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), unexpPt.getY(), unexpPt.getX());
 			exploringPath = testPath;
 			if (exploringPath != null) {
-				System.out.println(myPoint + " New exploring path " + agent.getName() + " " + unexpPt + "\nNew exploring path: " + exploringPath);
+				//System.out.println(myPoint + " New exploring path " + agent.getName() + " " + unexpPt + "\nNew exploring path: " + exploringPath);
 			}
 		}
 		updatePossibleMoves();
@@ -251,13 +255,12 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		someoneNearIsAlreadyHelping = false;
 
 		acl = myAgent.receive();
-
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " reading new messages");}
 		while(acl != null){
-			//System.out.println(acl);
 			parseAndUpdate(acl.getContent());
 			acl = myAgent.receive();
 		}
-
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " received " + helpRequests.size() + " help requests");}
 	}
 
 	/*
@@ -347,7 +350,6 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 				}
 			}
 		}
-		//this.possibleMoves = possibleMoves;
 	}
 
 	private void updateKnownSpaceOn(GridCell<Entity> cell){
@@ -394,14 +396,12 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		content += "\n" + knownSpaceString();
 		acl.setContent(content);
 
-		//System.out.println(acl);
-
 		for(T se : visibleAgents) {
 			acl.addReceiver(se.getAID());
-			//System.out.println(se);
 		}
 
 		agent.send(acl);
+		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " sent: " + acl);}
 	}
 
 	/*
@@ -422,11 +422,11 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		if (agent.getState().equals(ExplorerState.EXPLORING)) {
 			GridPoint nextPos;
 			if (!exploringPath.empty()) {
-				System.out.println("Following the path");
+				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exploring " + exploringPath);}
 				nextPos = exploringPath.pop();
 			}
 			else {
-				System.out.println("Moving randomly");
+				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exploring randomly");}
 				Random r = new Random();
 				int i = r.nextInt(possibleMoves.size());
 				nextPos = possibleMoves.get(i);
@@ -434,36 +434,17 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			grid.moveTo(agent,nextPos.getX(),nextPos.getY());
 		} else if (agent.getState().equals(ExplorerState.ASKING_HELP) || agent.getState().equals(ExplorerState.HELPING)) {
 			if(grid.getDistance(help, myPoint) > 1){// agent can be asking for help when moving towards the rock
-				System.out.println("OMW to rock");
+				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is moving to a rock in " + help);}
 				GridPoint nextHelpMove = helpPath.pop();
 				grid.moveTo(agent, nextHelpMove.getX(), nextHelpMove.getY());
 			}else{ // agent can be already next to the rock waiting for help and that way we will only wait 5 steps asking for help
 				helpCount++;
 			}
-			// askForHelp(visibleAgents);
-			//return;
 		} else if (agent.getState().equals(ExplorerState.EXITING)) {	// if the explorer already found the exit it starts to go to the exit
-			System.out.println("OMW to exit");
+			if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exiting " + exitPath);}
 			GridPoint nextExitMove = exitPath.pop();
 			grid.moveTo(agent, nextExitMove.getX(), nextExitMove.getY());
 		}
-	}
-
-	private void askForHelp(ArrayList<T> visibleAgents) {
-		ExplorerState state = agent.getState();
-		helpCount++;
-		ACLMessage acl = new ACLMessage();
-		acl.setContent(state + "\n" + myPoint);
-
-		for(T se : visibleAgents) {
-			acl.addReceiver(se.getAID());
-			//System.out.println(se);
-		}
-
-		agent.send(acl);
-		System.out.println("Help request: " + acl + "\nAsking " + (maxHelpCount-helpCount+1) + " more times!");
-
-		//acl = agent.receive();
 	}
 
 	/*

@@ -137,44 +137,16 @@ public class AStar {
 		}
 		grid[sy][sx].finalCost = 0;
 
-		//Display initial map
-		//System.out.println("Grid: ");
-		/*
-		for(int y=mapDim-1;y>=0;--y){
-			for(int x=0;x<mapDim;++x){
-				if(y==sy&&x==sx)System.out.print("SO  "); //Source
-				else if(y==ey && x==ex)System.out.print("DE  ");  //Destination
-				else if(grid[y][x]!=null)System.out.printf("%-3d ", 0);
-				else System.out.print("BL  "); 
-			}
-			System.out.println();
-		} 
-		System.out.println();
-*/
-		AStar(); 
-		//System.out.println("\nScores for cells: ");
-		/*for(int y=mapDim-1;y>=0;--y){
-			for(int x=0;x<mapDim;++x){
-				if(grid[y][x]!=null)System.out.printf("%-3d ", grid[y][x].finalCost);
-				else System.out.print("BL  ");
-			}
-			System.out.println();
-		}
-		System.out.println();
-*/
+		AStar();
 		if(closed[endY][endX]){
-			//Trace back the path 
-			//System.out.println("Path: ");
+			//Trace back the path
 			Cell current = grid[endY][endX];
-			//System.out.print(current);
 			Stack<GridPoint> stack = new Stack<GridPoint>();
 			stack.push(current.getPoint());
 			while(current.parent!=null){
-				//System.out.print(" -> "+current.parent);
 				current = current.parent;
 				stack.push(current.getPoint());
-			} 
-			//System.out.println();
+			}
 			return stack;
 		}else{
 			return new Stack<GridPoint>();

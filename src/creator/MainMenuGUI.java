@@ -48,7 +48,7 @@ public class MainMenuGUI extends JFrame {
 		setResizable(false);
 		setTitle("Map Creator");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(600, 250, 250, 230);
+		setBounds(600, 250, 250, 240);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -75,25 +75,29 @@ public class MainMenuGUI extends JFrame {
 				}
 			}
 		});
-		createMapBtn.setBounds(10, 130, 100, 30);
+		createMapBtn.setBounds(10, 130, 230, 30);
 		contentPane.add(createMapBtn);
 		
 		
 		fileNameText = new JTextField();
 		fileNameText.setHorizontalAlignment(SwingConstants.CENTER);
 		fileNameText.setText("map.txt");
-		fileNameText.setBounds(110, 160, 100, 30);
+		fileNameText.setBounds(140, 170, 100, 30);
 		contentPane.add(fileNameText);
 		
-		JButton createMapRandBtn = new JButton("Create Random Map");
+		JButton createMapRandBtn = new JButton("Random Map");
 		createMapRandBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (checkValuesInserted()) {
 					new MazeBuilder().buildMazetoTXT(fileNameText.getText(), Integer.parseInt(mapDimensionText.getText()));
+					JOptionPane.showMessageDialog(getParent(),
+							"Map was saved to:\n" + System.getProperty("user.dir")
+									+ System.getProperty("file.separator") + fileNameText.getText(),
+							"Map saved", JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
 		});
-		createMapRandBtn.setBounds(10, 160, 100, 30);
+		createMapRandBtn.setBounds(10, 170, 130, 30);
 		contentPane.add(createMapRandBtn);
 
 

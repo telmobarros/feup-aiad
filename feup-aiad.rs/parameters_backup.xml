@@ -24,6 +24,12 @@
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
 		/>
+				<parameter name="visionRadius" displayName="Vision radius" type="int" 
+						defaultValue="5" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
 				<parameter name="communicationRange" displayName="Communication Range" type="int" 
 						defaultValue="5" 
 						isReadOnly="false" 

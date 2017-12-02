@@ -15,6 +15,7 @@ public class MazeBuilder {
 	 * ' ' - Free space
 	 * 'X' - Wall
 	 * 'R' - Rock
+	 * 'E' - Exit
 	 * @param size Dimension of the squared maze (even numbers will turn into the next existing odd number since is required for the algorithm works properly)
 	 * @return 2D-Array of chars containing the symbols of the maze
 	 */
@@ -64,25 +65,25 @@ public class MazeBuilder {
 		case 0:
 			tmp = r.nextInt(size/2);
 			guide.setLocation(0, tmp);
-			maze[tmp*2+1][0] = 'S';
+			maze[tmp*2+1][0] = 'E';
 			break;
 
 		case 1:
 			tmp = r.nextInt(size/2);
 			guide.setLocation(tmp, 0);
-			maze[0][tmp*2+1] = 'S';
+			maze[0][tmp*2+1] = 'E';
 			break;
 
 		case 2:
 			tmp = r.nextInt(size/2);
 			guide.setLocation(size/2 - 1, tmp);
-			maze[tmp*2+1][size - 1] = 'S';
+			maze[tmp*2+1][size - 1] = 'E';
 			break;
 
 		case 3:
 			tmp = r.nextInt(size/2);
 			guide.setLocation(tmp,size/2 - 1);
-			maze[size - 1][tmp*2+1] = 'S';
+			maze[size - 1][tmp*2+1] = 'E';
 			break;
 		}
 
@@ -154,31 +155,6 @@ public class MazeBuilder {
 
 		}while(true);
 
-
-		do{
-			rx = r.nextInt(size);
-			ry = r.nextInt(size);
-			if (maze[ry][rx] == ' '){
-				maze[ry][rx] = 'E';
-				break;
-			}
-
-		}while(true);
-
-		// FOR DEBUGGING PURPOSES
-		//		for (int y = 0; y < size; y++){
-		//			for (int x = 0; x < size; x++){
-		//				System.out.print(maze[y][x]);
-		//			}
-		//			System.out.println();
-		//		}
-		//		for (int y = 0; y < size/2; y++){
-		//			for (int x = 0; x < size/2; x++){
-		//				System.out.print(visited[y][x]);
-		//			}
-		//			System.out.println();
-		//		}
-
 		return  maze;
 	}
 
@@ -186,7 +162,6 @@ public class MazeBuilder {
 	 * Generates a maze and writes into a .txt file
 	 * @param path Path of the .txt file to write
 	 * @param size Dimensions of the squared maze
-	 * @param numDragons Number of dragons to generate in the maze
 	 */
 	public void buildMazetoTXT(String path, int size){
 		Random r = new Random();

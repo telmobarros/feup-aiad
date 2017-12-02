@@ -1,3 +1,4 @@
+package main;
 
 
 import java.io.BufferedReader;
@@ -32,11 +33,12 @@ public class Launcher extends RepastSLauncher {
 	SimpleExplorer simpleExplorers[];
 	SuperExplorer superExplorers[];
 	
-	public static final boolean USE_RESULTS_COLLECTOR = true;
+	public static boolean DEBUG = false;
 	
-	public static final boolean SEPARATE_CONTAINERS = false;
+	public static final boolean SEPARATE_CONTAINERS = true;
 	private ContainerController mainContainer;
-	private ContainerController agentContainer;
+	private ContainerController simpleExplorersContainer;
+	private ContainerController superExplorersContainer;
 
 	public static Agent getAgent(Context<?> context, AID aid) {
 		for(Object obj : context.getObjects(Agent.class)) {
@@ -60,9 +62,12 @@ public class Launcher extends RepastSLauncher {
 		
 		if(SEPARATE_CONTAINERS) {
 			Profile p2 = new ProfileImpl();
-			agentContainer = rt.createAgentContainer(p2);
+			simpleExplorersContainer = rt.createAgentContainer(p2);
+			Profile p3 = new ProfileImpl();
+			superExplorersContainer = rt.createAgentContainer(p3);
 		} else {
-			agentContainer = mainContainer;
+			simpleExplorersContainer = mainContainer;
+			superExplorersContainer = mainContainer;
 		}
 		
 		launchAgents();
@@ -70,14 +75,14 @@ public class Launcher extends RepastSLauncher {
 	
 	private void launchAgents() {
 		
-		try {
+try {
 			
 			for (int i=0; i< simpleExplorers.length ; i++) {
-				agentContainer.acceptNewAgent("SimpleExplorer" + i, simpleExplorers[i]).start();
+				simpleExplorersContainer.acceptNewAgent("SimpleExplorer" + i, simpleExplorers[i]).start();
 			}
 			
 			for (int i=0; i< superExplorers.length ; i++) {
-				agentContainer.acceptNewAgent("SuperExplorer" + i, superExplorers[i]).start();
+				superExplorersContainer.acceptNewAgent("SuperExplorer" + i, superExplorers[i]).start();
 			}
 
 		} catch (StaleProxyException e) {
@@ -95,6 +100,8 @@ public class Launcher extends RepastSLauncher {
 		char[][] map;
 		Parameters params = RunEnvironment.getInstance().getParameters();
 		try{
+			// debug variable from parameters
+			DEBUG = params.getBoolean("debug");
 			String mapFile = params.getString("mapFile");
 			// open input stream for reading purpose.
 			BufferedReader br = new BufferedReader(new FileReader(mapFile));

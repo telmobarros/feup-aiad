@@ -18,6 +18,12 @@
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
 		/>
+				<parameter name="debug" displayName="Debug mode" type="boolean" 
+						defaultValue="false" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+									
+		/>
 				<parameter name="nSuperExplorers" displayName="Number of SuperExplorers" type="int" 
 						defaultValue="5" 
 						isReadOnly="false" 
