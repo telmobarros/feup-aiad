@@ -138,7 +138,8 @@ public class AStar {
 		grid[sy][sx].finalCost = 0;
 
 		//Display initial map
-		System.out.println("Grid: ");
+		//System.out.println("Grid: ");
+		/*
 		for(int y=mapDim-1;y>=0;--y){
 			for(int x=0;x<mapDim;++x){
 				if(y==sy&&x==sx)System.out.print("SO  "); //Source
@@ -149,10 +150,10 @@ public class AStar {
 			System.out.println();
 		} 
 		System.out.println();
-
+*/
 		AStar(); 
-		System.out.println("\nScores for cells: ");
-		for(int y=mapDim-1;y>=0;--y){
+		//System.out.println("\nScores for cells: ");
+		/*for(int y=mapDim-1;y>=0;--y){
 			for(int x=0;x<mapDim;++x){
 				if(grid[y][x]!=null)System.out.printf("%-3d ", grid[y][x].finalCost);
 				else System.out.print("BL  ");
@@ -160,20 +161,74 @@ public class AStar {
 			System.out.println();
 		}
 		System.out.println();
-
+*/
 		if(closed[endY][endX]){
 			//Trace back the path 
-			System.out.println("Path: ");
+			//System.out.println("Path: ");
 			Cell current = grid[endY][endX];
-			System.out.print(current);
+			//System.out.print(current);
 			Stack<GridPoint> stack = new Stack<GridPoint>();
 			stack.push(current.getPoint());
 			while(current.parent!=null){
-				System.out.print(" -> "+current.parent);
+				//System.out.print(" -> "+current.parent);
 				current = current.parent;
 				stack.push(current.getPoint());
 			} 
-			System.out.println();
+			//System.out.println();
+			return stack;
+		}else{
+			return new Stack<GridPoint>();
+		}
+	}
+	
+	public static Stack<GridPoint> getPathToUnexploredSpace(char[][] knownSpace, int sy, int sx, int ey, int ex){
+		int mapDim = knownSpace.length;
+		//Reset
+		grid = new Cell[mapDim][mapDim];
+		closed = new boolean[mapDim][mapDim];
+		open = new PriorityQueue<>((Object o1, Object o2) -> {
+			Cell c1 = (Cell)o1;
+			Cell c2 = (Cell)o2;
+
+			return c1.finalCost<c2.finalCost?-1:
+				c1.finalCost>c2.finalCost?1:0;
+		});
+		//Set start position
+		setStartCell(sx, sy);
+
+		//Set End Location
+		setEndCell(ex, ey);
+
+		for(int y=0;y<mapDim;++y){
+			for(int x=0;x<mapDim;++x){
+				if(knownSpace[y][x] == ' ' || knownSpace[y][x] == 'E' || knownSpace[y][x] == 'O'){
+					grid[y][x] = new Cell(y, x);
+					grid[y][x].heuristicCost = Math.abs(y-endY)+Math.abs(x-endX);
+				}
+			}
+		}
+		grid[sy][sx].finalCost = 0;
+
+		AStar(); 
+		
+		if(closed[endY][endX]){
+			Cell current = grid[endY][endX];
+			Stack<GridPoint> stack = new Stack<GridPoint>();
+			stack.push(current.getPoint());
+			while(current.parent!=null){
+				current = current.parent;
+				stack.push(current.getPoint());
+			} 
+			Stack<GridPoint> helpStack = new Stack<GridPoint>();
+			while (!stack.empty()) {
+				GridPoint curr = stack.pop();
+				if (knownSpace[curr.getY()][curr.getX()] == 'O') break;
+				helpStack.push(curr);
+			} 
+			stack.clear();
+			while (!helpStack.empty()) {
+				stack.push(helpStack.pop());
+			}
 			return stack;
 		}else{
 			return new Stack<GridPoint>();
