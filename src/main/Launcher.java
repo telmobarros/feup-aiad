@@ -3,11 +3,13 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.List;
 import java.util.Random;
 
 import entities.Exit;
 import entities.Rock;
 import entities.Wall;
+import entities.agents.Explorer;
 import entities.agents.SimpleExplorer;
 import entities.agents.SuperExplorer;
 import jade.core.AID;
@@ -17,14 +19,19 @@ import repast.simphony.context.Context;
 import repast.simphony.context.space.grid.GridFactory;
 import repast.simphony.context.space.grid.GridFactoryFinder;
 import repast.simphony.engine.environment.RunEnvironment;
+import repast.simphony.engine.schedule.ScheduleParameters;
 import repast.simphony.parameter.Parameters;
+import repast.simphony.query.space.grid.GridCell;
+import repast.simphony.query.space.grid.GridCellNgh;
 import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridBuilderParameters;
+import repast.simphony.space.grid.GridPoint;
 import repast.simphony.space.grid.SimpleGridAdder;
 import repast.simphony.space.grid.StrictBorders;
 import repast.simphony.space.grid.WrapAroundBorders;
 import sajas.core.Agent;
 import sajas.core.Runtime;
+import sajas.core.TimerDispatcher;
 import sajas.sim.repasts.RepastSLauncher;
 import sajas.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
@@ -32,8 +39,10 @@ import jade.wrapper.StaleProxyException;
 public class Launcher extends RepastSLauncher {
 	SimpleExplorer simpleExplorers[];
 	SuperExplorer superExplorers[];
+	Grid<Object> grid;
 	
 	public static boolean DEBUG = false;
+	public static int N_EXPLORERS = 0;
 	
 	public static final boolean SEPARATE_CONTAINERS = true;
 	private ContainerController mainContainer;
@@ -119,7 +128,7 @@ try {
 
 			//initializes grid
 			GridFactory gridFactory = GridFactoryFinder.createGridFactory(null);
-			Grid<Object> grid = gridFactory.createGrid(
+			grid = gridFactory.createGrid(
 					"grid",
 					context,
 					new GridBuilderParameters<Object>(new StrictBorders(),
@@ -179,6 +188,7 @@ try {
 				} while (map[ry][rx] != ' ');
 
 				grid.moveTo(simpleExplorers[i], rx, ry);
+				N_EXPLORERS++;
 			}
 			for (int i=0; i< nSuperExplorers ; i++) {
 				superExplorers[i] = new SuperExplorer(grid, visionRadius, mapDim);
@@ -191,14 +201,24 @@ try {
 				} while (map[ry][rx] != ' ');
 
 				grid.moveTo(superExplorers[i], rx, ry);
+				N_EXPLORERS++;
 			}
 
 		}catch(Exception e){
 			System.exit(1);
 			e.printStackTrace();
 		}
+		
+		ScheduleParameters params1 = ScheduleParameters.createRepeating(1, 1);
+		RunEnvironment.getInstance().getCurrentSchedule().schedule(params1, this, "checkNoAgents");
 
 		return super.build(context);
+	}
+	
+	public void checkNoAgents(){
+		if(N_EXPLORERS == 0){
+			stopSimulation();
+		}
 	}
 
 }

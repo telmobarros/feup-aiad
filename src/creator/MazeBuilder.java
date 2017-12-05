@@ -143,7 +143,7 @@ public class MazeBuilder {
 			}
 		}
 
-		//Randomly place of dragon
+		//Randomly place of rocks
 		int rx, ry;
 		do{
 			rx = r.nextInt(size);
@@ -179,6 +179,17 @@ public class MazeBuilder {
 					break;
 				}
 			}while(true);
+		}
+
+		// turn maze into open space
+		for ( int y = 1; y < maze.length-1; y++)
+		{
+			for ( int x = 1; x < maze[y].length-1; x++)
+			{    
+				if(r.nextDouble() < 0.4){
+					maze[y][x] = ' ';
+				}
+			}
 		}
 
 		try {

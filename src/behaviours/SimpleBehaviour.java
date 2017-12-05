@@ -50,6 +50,10 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	private int helpCount = 0;
 	private int maxHelpCount = 5;
 
+	private double lastKnownSpaceArea = 0;
+	private double knownSpaceArea = 0;
+	private boolean hasInformedLastStep = true;
+
 	private Stack<GridPoint> exploringPath;
 
 	@Override
@@ -69,23 +73,43 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		updateKnownSpace();
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " udpated map knowledge based on my vision");}
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " kwown map:\n" + knownSpaceString());}
+		// update known space are
+		updateKnownSpaceArea();
 
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " was " + agent.getState().toString() + " [" + help + ", " + exit + "]");}
 		//update state
 		updateState();
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is " + agent.getState().toString() + " [" + help + ", " + exit + "]");}
 
-		// find visible agents
-		findVisibleAgents();
-		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " will inform new state to: " + visibleAgents.toString());}
-		// inform visible agents about the known space (send known space to a method that accepts what we want to send and sends it to agents that we want)
-		if (visibleAgents.size() != 0) {
-			informStateAndKnownSpace(visibleAgents);
+		if(((knownSpaceArea - lastKnownSpaceArea) > 0.03) || agent.getState().equals(ExplorerState.EXITING)){
+			hasInformedLastStep = !hasInformedLastStep;
+			if(!hasInformedLastStep){
+				lastKnownSpaceArea = knownSpaceArea;
+				// find visible agents
+				findVisibleAgents();
+				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " will inform new state to: " + visibleAgents.toString());}
+				// inform visible agents about the known space (send known space to a method that accepts what we want to send and sends it to agents that we want)
+				if (visibleAgents.size() != 0) {
+					informStateAndKnownSpace(visibleAgents);
+				}
+			}
 		}
-		
+
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " moves");}
 		// make a move based on the state
 		move();
+	}
+
+	private void updateKnownSpaceArea() {
+		knownSpaceArea = 0;
+		for(int y=0; y < agent.getKnownSpace().length; y++){
+			for(int x=0; x < agent.getKnownSpace().length; x++){
+				if(agent.getKnownSpace(y,x) != 'O'){
+					knownSpaceArea++;
+				}
+			}
+		}
+		knownSpaceArea /= (agent.getKnownSpace().length*agent.getKnownSpace().length);
 	}
 
 	private void updateState() {
@@ -94,6 +118,9 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			agent.doDelete();
 			this.done();
 			agent.setState(ExplorerState.EXITED);
+			synchronized (Launcher.class) {
+				Launcher.N_EXPLORERS--;
+			}
 			return;
 		} 
 		if(!agent.getState().equals(ExplorerState.EXITING)){	// if the agent is not already exiting the map it will check if it is already possible
@@ -142,16 +169,20 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			//System.out.println("Not receiving help :( I'm out after " + helpCount + " steps!");
 			helpCount = 0;
 			agent.setState(ExplorerState.EXPLORING);
+			exploringPath = null;
 		}
 		if (agent.getState().equals(ExplorerState.EXPLORING) && (exploringPath == null || exploringPath.empty())) {
 			// pick a point in unexplored area
 			// make a path to that point
 			//System.out.println("path: " + exploringPath);
 			GridPoint unexpPt = getUnexploredPoint();
-			Stack<GridPoint> testPath = AStar.getPathToUnexploredSpace(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), unexpPt.getY(), unexpPt.getX());
-			exploringPath = testPath;
-			if (exploringPath != null) {
-				//System.out.println(myPoint + " New exploring path " + agent.getName() + " " + unexpPt + "\nNew exploring path: " + exploringPath);
+			if(unexpPt != null){
+				Stack<GridPoint> testPath = AStar.getPathToUnexploredSpace(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), unexpPt.getY(), unexpPt.getX());
+				exploringPath = testPath;
+				if (exploringPath != null) {
+					//exploringPath.pop();
+					//System.out.println(myPoint + " New exploring path " + agent.getName() + " " + unexpPt + "\nNew exploring path: " + exploringPath);
+				}
 			}
 		}
 		updatePossibleMoves();
@@ -174,16 +205,25 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 	private GridPoint getUnexploredPoint() {
 		Random r = new Random();
-		int x, y;
-		int nLoops = 10; 
+		int x, y,
+		visionRadiusMultiplier = 1,
+		newPointRange, right, left, up, down,
+		nLoops = 15; 
 		do {
-			x = r.nextInt(agent.getKnownSpace().length);
-			y = r.nextInt(agent.getKnownSpace().length);
+			visionRadiusMultiplier++;
+			newPointRange = agent.getVisionRadius() * visionRadiusMultiplier;
+			right= ((myPoint.getX() + newPointRange < agent.getKnownSpace().length-1) ? myPoint.getX() + newPointRange : agent.getKnownSpace().length-1);
+			left = ((myPoint.getX() - newPointRange > 0) ? myPoint.getX() - newPointRange : 0);
+			up= ((myPoint.getY() + newPointRange < agent.getKnownSpace().length-1) ? myPoint.getY() + newPointRange : agent.getKnownSpace().length-1);
+			down= ((myPoint.getY() - newPointRange > 0) ? myPoint.getY() - newPointRange : 0);
+			x = r.nextInt(right - left) + left;
+			y = r.nextInt(up - down) + down;
 			// because it might last too long or infinite
+
 			nLoops--;
-		} while (agent.getKnownSpace(y, x) != 'O' || nLoops == 0);
+		} while (agent.getKnownSpace(y, x) != 'O' && nLoops >= 0);
 		// returns null if unexplored point cannot be fined in reasonable time
-		if (nLoops == 0)
+		if (nLoops < 0)
 			return null;
 
 		return new GridPoint(x,y);
@@ -282,11 +322,13 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			}
 		}
 
-		int mapDim = agent.getKnownSpace().length;
-		// update known space
-		for(int y = mapDim-1; y >= 0; y--){
-			for(int x=0; x < mapDim; x++){
-				agent.setKnownSpace(y, x, lines[mapDim-y].charAt(x));
+		if(!agent.getState().equals(ExplorerState.EXITING)){
+			int mapDim = agent.getKnownSpace().length;
+			// update known space
+			for(int y = mapDim-1; y >= 0; y--){
+				for(int x=0; x < mapDim; x++){
+					agent.setKnownSpace(y, x, lines[mapDim-y].charAt(x));
+				}
 			}
 		}
 	}
@@ -421,7 +463,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	private void move() {
 		if (agent.getState().equals(ExplorerState.EXPLORING)) {
 			GridPoint nextPos;
-			if (!exploringPath.empty()) {
+			if (exploringPath != null && !exploringPath.empty()) {
 				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exploring " + exploringPath);}
 				nextPos = exploringPath.pop();
 			}
