@@ -5,7 +5,7 @@ import sajas.core.Agent;
 
 public abstract class Explorer extends Agent{
 	public enum ExplorerState {
-		EXPLORING, ASKING_HELP, HELPING, EXITING, EXITED
+		EXPLORING_EXIT, EXPLORING_PATH_EXIT, ASKING_HELP, HELPING, EXITING, EXITED
 	}
 
 	public static double ASK_HELP_PROB = 0.4;
@@ -27,7 +27,7 @@ public abstract class Explorer extends Agent{
 				knownSpace[y][x] = 'O';
 			}
 		}
-		this.state = ExplorerState.EXPLORING;
+		this.state = ExplorerState.EXPLORING_EXIT;
 	}
 
 	public String knownSpaceString(){

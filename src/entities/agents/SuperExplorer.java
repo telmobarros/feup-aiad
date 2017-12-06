@@ -14,7 +14,7 @@ public class SuperExplorer extends Explorer{
 
 	@Override
 	public int getCommunicationRange() {
-		return this.getGrid().getDimensions().getWidth()/2;
+		return this.getGrid().getDimensions().getWidth();
 	}
 
 }

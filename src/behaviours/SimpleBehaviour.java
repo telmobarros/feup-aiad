@@ -122,8 +122,11 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 				Launcher.N_EXPLORERS--;
 			}
 			return;
-		} 
-		if(!agent.getState().equals(ExplorerState.EXITING)){	// if the agent is not already exiting the map it will check if it is already possible
+		}
+		if(agent.getState().equals(ExplorerState.EXITING)){
+			return;
+		}
+		if(!agent.getState().equals(ExplorerState.EXITING) && exit == null){	// if the agent is not already exiting the map it will check if it already knows the exit and it is already possible
 			exit = checkExit();
 			if(exit != null){
 				exitPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), exit.getY(), exit.getX());
@@ -132,6 +135,22 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 					agent.setState(ExplorerState.EXITING);
 					return;
 				}
+			}
+		}
+		if(!agent.getState().equals(ExplorerState.EXITING) && exit != null){	// if the agent is not already exiting the map  but knows where is the exit it will check if it is already possible
+			exitPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), exit.getY(), exit.getX());
+			if(!exitPath.isEmpty()){ // check if there is path between agent position and exit
+				exitPath.pop(); // pop starting position that is the position where the agent is currently
+				agent.setState(ExplorerState.EXITING);
+				return;
+			}
+		}
+		if(exit != null && exitPath.isEmpty()){	// if the agent knows the exit but doesn't know how to get it
+			exploringPath = AStar.getPathToUnexploredSpace(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), exit.getY(), exit.getX());
+			if(!exploringPath.isEmpty()){ // check if there is path between agent position and exit
+				exploringPath.pop(); // pop starting position that is the position where the agent is currently
+				agent.setState(ExplorerState.EXPLORING_PATH_EXIT);
+				return;
 			}
 		}
 		if(!agent.getState().equals(ExplorerState.HELPING) && !helpRequests.isEmpty()){
@@ -168,10 +187,10 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 				|| (agent.getState().equals(ExplorerState.HELPING) && someoneNearIsAlreadyHelping)){ // someone near is already helping
 			//System.out.println("Not receiving help :( I'm out after " + helpCount + " steps!");
 			helpCount = 0;
-			agent.setState(ExplorerState.EXPLORING);
+			agent.setState(ExplorerState.EXPLORING_EXIT);
 			exploringPath = null;
 		}
-		if (agent.getState().equals(ExplorerState.EXPLORING) && (exploringPath == null || exploringPath.empty())) {
+		if (agent.getState().equals(ExplorerState.EXPLORING_EXIT) && (exploringPath == null || exploringPath.empty())) {
 			// pick a point in unexplored area
 			// make a path to that point
 			//System.out.println("path: " + exploringPath);
@@ -461,13 +480,12 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	}
 
 	private void move() {
-		if (agent.getState().equals(ExplorerState.EXPLORING)) {
+		if (agent.getState().equals(ExplorerState.EXPLORING_EXIT) || agent.getState().equals(ExplorerState.EXPLORING_PATH_EXIT)) {
 			GridPoint nextPos;
 			if (exploringPath != null && !exploringPath.empty()) {
 				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exploring " + exploringPath);}
 				nextPos = exploringPath.pop();
-			}
-			else {
+			} else {
 				if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " is exploring randomly");}
 				Random r = new Random();
 				int i = r.nextInt(possibleMoves.size());
