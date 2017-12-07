@@ -12,6 +12,12 @@
 						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
 									
 		/>
+				<parameter name="intercommunication" displayName="Intercommunication" type="boolean" 
+						defaultValue="false" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+									
+		/>
 				<parameter name="nExplorers" displayName="Number of explorers" type="int" 
 						defaultValue="5" 
 						isReadOnly="false" 
@@ -40,6 +46,12 @@
 						defaultValue="5" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
+				<parameter name="backBeforeExit" displayName="Go back before exiting" type="boolean" 
+						defaultValue="false" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
 									
 		/>
 		</parameters>

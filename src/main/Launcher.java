@@ -42,6 +42,8 @@ public class Launcher extends RepastSLauncher {
 	Grid<Object> grid;
 	
 	public static boolean DEBUG = false;
+	public static boolean INTERCOMMUNICATION = false;
+	public static boolean BACK_BEFORE_EXIT = false;
 	public static int N_EXPLORERS = 0;
 	
 	public static final boolean SEPARATE_CONTAINERS = true;
@@ -111,6 +113,8 @@ try {
 		try{
 			// debug variable from parameters
 			DEBUG = params.getBoolean("debug");
+			INTERCOMMUNICATION = params.getBoolean("intercommunication");
+			BACK_BEFORE_EXIT = params.getBoolean("backBeforeExit");
 			String mapFile = params.getString("mapFile");
 			// open input stream for reading purpose.
 			BufferedReader br = new BufferedReader(new FileReader(mapFile));

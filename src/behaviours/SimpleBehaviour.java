@@ -308,6 +308,7 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	 */
 	private void readNewMessages() {
 		ACLMessage acl = new ACLMessage();
+		boolean discoveredExit = false;
 
 		// reset help requests and helping informations
 		helpRequests = new ArrayList<GridPoint>();
@@ -315,8 +316,8 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 		acl = myAgent.receive();
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " reading new messages");}
-		while(acl != null){
-			parseAndUpdate(acl.getContent());
+		while(acl != null && !discoveredExit){
+			discoveredExit = parseAndUpdate(acl.getContent());
 			acl = myAgent.receive();
 		}
 		if (Launcher.DEBUG) {System.out.println(agent.getLocalName() + " received " + helpRequests.size() + " help requests");}
@@ -325,9 +326,10 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 	/*
 	 * Merges two known spaces, the ones that the agent know and the possibly new received in a message
 	 */
-	private void parseAndUpdate(String message) {
+	private boolean parseAndUpdate(String message) {
 		String[] lines = message.split("\n");
 		String[] state = lines[0].split(" ");
+		boolean discoveredExit = false;
 		if(state[0].equals("ASKING_HELP") && (!agent.getState().equals("ASKING_HELP") || !agent.getState().equals("HELPING"))){
 			int x = Integer.parseInt(state[1]);
 			int y = Integer.parseInt(state[2]);
@@ -347,9 +349,13 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			for(int y = mapDim-1; y >= 0; y--){
 				for(int x=0; x < mapDim; x++){
 					agent.setKnownSpace(y, x, lines[mapDim-y].charAt(x));
+					if(lines[mapDim-y].charAt(x) == 'E'){
+						discoveredExit = true;
+					}
 				}
 			}
 		}
+		return discoveredExit;
 	}
 
 
@@ -435,8 +441,20 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		List<GridCell<Explorer>> gridCellsAgents = agentsNghCreator.getNeighborhood(true); // true or false to include the center
 		for(GridCell<Explorer> cell : gridCellsAgents) {
 			for(Explorer se : cell.items()){
-				if(se.getClass().equals(agent.getClass()) && !this.visibleAgents.contains((T)se) && se != agent) {
-					this.visibleAgents.add((T)se);
+				if(Launcher.INTERCOMMUNICATION){
+					if(agent.getClass().equals(SimpleExplorer.class)){ // se a intercomunicação for simpleExplorer -> superExplorer
+						if(!this.visibleAgents.contains((T)se) && se != agent) {
+							this.visibleAgents.add((T)se);
+						}
+					} else { // se a intercomunicação for superExplorer -> simpleExplorer
+						if(grid.getDistance(myPoint, cell.getPoint()) < se.getCommunicationRange() && !this.visibleAgents.contains((T)se) && se != agent) {
+							this.visibleAgents.add((T)se);
+						}
+					}
+				} else {
+					if(se.getClass().equals(agent.getClass()) && !this.visibleAgents.contains((T)se) && se != agent) {
+						this.visibleAgents.add((T)se);
+					}
 				}
 			}
 		}
