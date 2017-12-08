@@ -131,6 +131,17 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 			if(exit != null){
 				exitPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), exit.getY(), exit.getX());
 				if(!exitPath.isEmpty()){ // check if there is path between agent position and exit
+					if(Launcher.BACK_BEFORE_EXIT){
+						GridPoint tmpPt = getExploredPoint();
+						if(tmpPt != null){
+							Stack<GridPoint> tmpPath = AStar.getShortestPath(agent.getKnownSpace(), tmpPt.getY(), tmpPt.getX(), exit.getY(), exit.getX());
+							if(!tmpPath.isEmpty()){ // check if there is path between agent position and exit
+								tmpPath.pop();
+								tmpPath.addAll(AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), tmpPt.getY(), tmpPt.getX()));
+								exitPath = tmpPath;
+							}
+						}
+					}
 					exitPath.pop(); // pop starting position that is the position where the agent is currently
 					agent.setState(ExplorerState.EXITING);
 					return;
@@ -140,6 +151,17 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 		if(!agent.getState().equals(ExplorerState.EXITING) && exit != null){	// if the agent is not already exiting the map  but knows where is the exit it will check if it is already possible
 			exitPath = AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), exit.getY(), exit.getX());
 			if(!exitPath.isEmpty()){ // check if there is path between agent position and exit
+				if(Launcher.BACK_BEFORE_EXIT){
+					GridPoint tmpPt = getExploredPoint();
+					if(tmpPt != null){
+						Stack<GridPoint> tmpPath = AStar.getShortestPath(agent.getKnownSpace(), tmpPt.getY(), tmpPt.getX(), exit.getY(), exit.getX());
+						if(!tmpPath.isEmpty()){ // check if there is path between agent position and exit
+							tmpPath.pop();
+							tmpPath.addAll(AStar.getShortestPath(agent.getKnownSpace(), myPoint.getY(), myPoint.getX(), tmpPt.getY(), tmpPt.getX()));
+							exitPath = tmpPath;
+						}
+					}
+				}
 				exitPath.pop(); // pop starting position that is the position where the agent is currently
 				agent.setState(ExplorerState.EXITING);
 				return;
@@ -241,6 +263,24 @@ public class SimpleBehaviour<T extends Explorer> extends CyclicBehaviour {
 
 			nLoops--;
 		} while (agent.getKnownSpace(y, x) != 'O' && nLoops >= 0);
+		// returns null if unexplored point cannot be fined in reasonable time
+		if (nLoops < 0)
+			return null;
+
+		return new GridPoint(x,y);
+	}
+
+	private GridPoint getExploredPoint() {
+		Random r = new Random();
+		int x, y,
+		nLoops = 15; 
+		do {
+			x = r.nextInt(agent.getKnownSpace().length);
+			y = r.nextInt(agent.getKnownSpace().length);
+			// because it might last too long or infinite
+
+			nLoops--;
+		} while (agent.getKnownSpace(y, x) != ' ' && nLoops >= 0);
 		// returns null if unexplored point cannot be fined in reasonable time
 		if (nLoops < 0)
 			return null;
